@@ -8,60 +8,130 @@ class RoleSelectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 40),
-              Text(
-                'Welcome!',
-                style: Theme.of(context).textTheme.displayLarge,
-                textAlign: TextAlign.center,
-              ).animate().fadeIn().slideY(begin: -0.3, end: 0),
-              const SizedBox(height: 8),
-              Text(
-                'Choose your role to continue',
-                style: Theme.of(context).textTheme.bodyMedium,
-                textAlign: TextAlign.center,
-              ).animate().fadeIn(delay: 200.ms),
-              const SizedBox(height: 60),
-
-              // Teacher Card
-              RoleCard(
-                title: 'Teacher',
-                subtitle: 'Start attendance sessions',
-                icon: Icons.school_rounded,
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF6C63FF), Color(0xFF5A52D5)],
-                ),
-                onTap: () => Navigator.pushNamed(context, '/teacher-login'),
-              ).animate().fadeIn(delay: 300.ms).slideX(begin: -0.3, end: 0),
-
-              const SizedBox(height: 24),
-
-              // Student Card
-              RoleCard(
-                title: 'Student',
-                subtitle: 'Mark your attendance',
-                icon: Icons.person_rounded,
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF4CAF50), Color(0xFF45A049)],
-                ),
-                onTap: () => Navigator.pushNamed(context, '/student-login'),
-              ).animate().fadeIn(delay: 400.ms).slideX(begin: 0.3, end: 0),
-
-              const Spacer(),
-
-              Text(
-                'Smart Attendance System v1.0',
-                style: Theme.of(context).textTheme.bodySmall,
-                textAlign: TextAlign.center,
-              ).animate().fadeIn(delay: 600.ms),
-
-              const SizedBox(height: 20),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFFF5F7FA),
+              Color(0xFFE8EAF6),
             ],
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 40),
+                
+                // Logo/Icon at top
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1A237E).withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.qr_code_scanner_rounded,
+                    size: 50,
+                    color: Color(0xFF1A237E),
+                  ),
+                ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack).fadeIn(),
+                
+                const SizedBox(height: 32),
+                
+                Text(
+                  'Welcome!',
+                  style: const TextStyle(
+                    fontSize: 40,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A237E),
+                    letterSpacing: 0.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.3, end: 0),
+                
+                const SizedBox(height: 12),
+                
+                Text(
+                  'Choose your role to continue',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: 0.3,
+                  ),
+                  textAlign: TextAlign.center,
+                ).animate().fadeIn(delay: 300.ms),
+                
+                const SizedBox(height: 60),
+
+                // Teacher Card
+                RoleCard(
+                  title: 'Teacher',
+                  subtitle: 'Start attendance sessions',
+                  icon: Icons.school_rounded,
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1A237E), Color(0xFF283593)],
+                  ),
+                  onTap: () => Navigator.pushNamed(context, '/teacher-login'),
+                ).animate().fadeIn(delay: 400.ms).slideX(begin: -0.3, end: 0),
+
+                const SizedBox(height: 20),
+
+                // Student Card
+                RoleCard(
+                  title: 'Student',
+                  subtitle: 'Mark your attendance',
+                  icon: Icons.person_rounded,
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF3949AB), Color(0xFF5C6BC0)],
+                  ),
+                  onTap: () => Navigator.pushNamed(context, '/student-login'),
+                ).animate().fadeIn(delay: 500.ms).slideX(begin: 0.3, end: 0),
+
+                const Spacer(),
+
+                // Bottom decoration
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFF1A237E).withOpacity(0.1),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.verified_user_rounded,
+                        size: 18,
+                        color: Colors.grey[600],
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Smart Attendance System v1.0',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 0.3,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.2, end: 0),
+
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
       ),
@@ -70,7 +140,7 @@ class RoleSelectionScreen extends StatelessWidget {
 }
 
 // widgets/role_card.dart
-class RoleCard extends StatelessWidget {
+class RoleCard extends StatefulWidget {
   final String title;
   final String subtitle;
   final IconData icon;
@@ -87,63 +157,99 @@ class RoleCard extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<RoleCard> createState() => _RoleCardState();
+}
+
+class _RoleCardState extends State<RoleCard> {
+  bool _isPressed = false;
+
+  @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          gradient: gradient,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color:
-                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(16),
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) {
+        setState(() => _isPressed = false);
+        widget.onTap();
+      },
+      onTapCancel: () => setState(() => _isPressed = false),
+      child: AnimatedScale(
+        scale: _isPressed ? 0.96 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: widget.gradient,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: widget.gradient.colors.first.withOpacity(0.4),
+                blurRadius: 24,
+                offset: const Offset(0, 12),
+                spreadRadius: 0,
               ),
-              child: Icon(icon, size: 40, color: Colors.white),
-            ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white.withValues(alpha: 0.9),
-                    ),
-                  ),
-                ],
+              BoxShadow(
+                color: widget.gradient.colors.first.withOpacity(0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+                spreadRadius: 0,
               ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              color: Colors.white.withValues(alpha: 0.8),
-            ),
-          ],
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.3),
+                    width: 2,
+                  ),
+                ),
+                child: Icon(widget.icon, size: 40, color: Colors.white),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.title,
+                      style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      widget.subtitle,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white.withOpacity(0.9),
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.arrow_forward_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

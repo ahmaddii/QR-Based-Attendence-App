@@ -103,3 +103,4 @@ If you're not sure what your original function does:
 4. Add `SECURITY DEFINER` and `SET search_path = public, auth`
 5. Recreate it
 
+

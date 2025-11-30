@@ -133,8 +133,20 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(message),
-          backgroundColor: isError ? Colors.red : Colors.green,
+          content: Row(
+            children: [
+              Icon(
+                isError ? Icons.error_outline : Icons.check_circle_outline,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 12),
+              Expanded(child: Text(message)),
+            ],
+          ),
+          backgroundColor: isError ? const Color(0xFFE53935) : const Color(0xFF43A047),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.all(16),
         ),
       );
     }
@@ -143,8 +155,62 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Scan QR Code'),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        leading: IconButton(
+          onPressed: () => Navigator.of(context).pop(),
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: const Icon(
+              Icons.arrow_back_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+        ),
+        title: const Text(
+          'Scan QR Code',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 20,
+          ),
+        ),
+        actions: [
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            child: IconButton(
+              onPressed: () => controller.toggleTorch(),
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.flash_on_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -167,28 +233,120 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                 // Custom overlay
                 CustomPaint(
                   painter: QRScannerOverlay(
-                    borderColor: Theme.of(context).colorScheme.primary,
+                    borderColor: const Color(0xFF5C6BC0),
                   ),
                   child: Container(),
                 ),
+                // Processing overlay
+                if (isProcessing)
+                  Container(
+                    color: Colors.black.withOpacity(0.7),
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.3),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: const Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CircularProgressIndicator(
+                              strokeWidth: 3,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Color(0xFF3949AB),
+                              ),
+                            ),
+                            SizedBox(height: 20),
+                            Text(
+                              'Processing...',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF1A237E),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
-          Expanded(
-            flex: 1,
-            child: Container(
-              color: Colors.black87,
-              child: Center(
-                child: isProcessing
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : Text(
-                        'Align QR code within the frame',
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  color: Colors.white,
-                                ),
-                      ),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withOpacity(0.8),
+                  Colors.black,
+                ],
               ),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3949AB).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFF5C6BC0).withOpacity(0.5),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF3949AB),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.qr_code_scanner_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Align QR code within frame',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Make sure the code is clear and well-lit',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.7),
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -206,7 +364,7 @@ class QRScannerOverlay extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.black54
+      ..color = Colors.black.withOpacity(0.6)
       ..style = PaintingStyle.fill;
 
     final borderPaint = Paint()
@@ -214,9 +372,15 @@ class QRScannerOverlay extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4;
 
+    final glowPaint = Paint()
+      ..color = borderColor.withOpacity(0.3)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 8
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+
     final width = size.width;
     final height = size.height;
-    final cutOutSize = 300.0;
+    final cutOutSize = 280.0;
     final left = (width - cutOutSize) / 2;
     final top = (height - cutOutSize) / 2;
     final right = left + cutOutSize;
@@ -228,28 +392,50 @@ class QRScannerOverlay extends CustomPainter {
       ..addRRect(
         RRect.fromRectAndRadius(
           Rect.fromLTRB(left, top, right, bottom),
-          const Radius.circular(10),
+          const Radius.circular(20),
         ),
       )
       ..fillType = PathFillType.evenOdd;
 
     canvas.drawPath(path, paint);
 
-    // Draw border
+    // Draw corner borders with glow
+    final cornerLength = 40.0;
     final borderPath = Path()
-      ..moveTo(left, top + 30)
-      ..lineTo(left, top)
-      ..lineTo(left + 30, top)
-      ..moveTo(right - 30, top)
-      ..lineTo(right, top)
-      ..lineTo(right, top + 30)
-      ..moveTo(right, bottom - 30)
-      ..lineTo(right, bottom)
-      ..lineTo(right - 30, bottom)
-      ..moveTo(left + 30, bottom)
-      ..lineTo(left, bottom)
-      ..lineTo(left, bottom - 30);
+      // Top-left
+      ..moveTo(left, top + cornerLength)
+      ..lineTo(left, top + 10)
+      ..arcToPoint(
+        Offset(left + 10, top),
+        radius: const Radius.circular(10),
+      )
+      ..lineTo(left + cornerLength, top)
+      // Top-right
+      ..moveTo(right - cornerLength, top)
+      ..lineTo(right - 10, top)
+      ..arcToPoint(
+        Offset(right, top + 10),
+        radius: const Radius.circular(10),
+      )
+      ..lineTo(right, top + cornerLength)
+      // Bottom-right
+      ..moveTo(right, bottom - cornerLength)
+      ..lineTo(right, bottom - 10)
+      ..arcToPoint(
+        Offset(right - 10, bottom),
+        radius: const Radius.circular(10),
+      )
+      ..lineTo(right - cornerLength, bottom)
+      // Bottom-left
+      ..moveTo(left + cornerLength, bottom)
+      ..lineTo(left + 10, bottom)
+      ..arcToPoint(
+        Offset(left, bottom - 10),
+        radius: const Radius.circular(10),
+      )
+      ..lineTo(left, bottom - cornerLength);
 
+    canvas.drawPath(borderPath, glowPaint);
     canvas.drawPath(borderPath, borderPaint);
   }
 

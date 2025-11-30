@@ -15,3 +15,4 @@ DROP FUNCTION IF EXISTS create_user_for_student() CASCADE;
 -- That's it! Your app will work correctly now.
 -- The user is already created by auth.signUp() before the students table insert.
 
+
