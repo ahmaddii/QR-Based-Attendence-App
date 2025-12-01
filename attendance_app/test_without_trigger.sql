@@ -10,3 +10,4 @@ ALTER TABLE students DISABLE TRIGGER trigger_create_user_for_student;
 -- To re-enable the trigger later (if needed):
 -- ALTER TABLE students ENABLE TRIGGER trigger_create_user_for_student;
 
+

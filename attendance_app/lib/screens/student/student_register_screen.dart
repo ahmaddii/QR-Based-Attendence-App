@@ -50,7 +50,8 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
             ),
             backgroundColor: const Color(0xFFE53935),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             margin: const EdgeInsets.all(16),
           ),
         );
@@ -84,7 +85,8 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
             ),
             backgroundColor: const Color(0xFFE53935),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             margin: const EdgeInsets.all(16),
           ),
         );
@@ -129,7 +131,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 20),
-                
+
                 // Icon
                 Center(
                   child: Container(
@@ -156,9 +158,9 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 const Text(
                   'Create Account',
                   style: TextStyle(
@@ -169,9 +171,9 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 const SizedBox(height: 8),
-                
+
                 Text(
                   'Register as a student',
                   style: TextStyle(
@@ -181,9 +183,9 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 const SizedBox(height: 32),
-                
+
                 // Name Field
                 _buildTextField(
                   controller: _nameController,
@@ -197,9 +199,9 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                     return null;
                   },
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Email Field - UPDATED WITH VALIDATION
                 _buildTextField(
                   controller: _emailController,
@@ -218,9 +220,9 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                     return null;
                   },
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Roll Number Field
                 _buildTextField(
                   controller: _rollNumberController,
@@ -234,9 +236,9 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                     return null;
                   },
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Class Name Field
                 _buildTextField(
                   controller: _classNameController,
@@ -250,9 +252,9 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                     return null;
                   },
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Section Field
                 _buildTextField(
                   controller: _sectionController,
@@ -266,9 +268,9 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                     return null;
                   },
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Password Field
                 _buildPasswordField(
                   controller: _passwordController,
@@ -290,9 +292,9 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                     return null;
                   },
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Confirm Password Field
                 _buildPasswordField(
                   controller: _confirmPasswordController,
@@ -311,9 +313,9 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                     return null;
                   },
                 ),
-                
+
                 const SizedBox(height: 32),
-                
+
                 // Register Button
                 Consumer<AuthProvider>(
                   builder: (context, authProvider, _) {
@@ -332,7 +334,8 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                         ],
                       ),
                       child: ElevatedButton(
-                        onPressed: authProvider.isLoading ? null : _handleRegister,
+                        onPressed:
+                            authProvider.isLoading ? null : _handleRegister,
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 18),
                           shape: RoundedRectangleBorder(
@@ -366,9 +369,9 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                     );
                   },
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Login Link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -405,7 +408,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 20),
               ],
             ),

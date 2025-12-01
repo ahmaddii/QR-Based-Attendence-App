@@ -19,6 +19,7 @@ dependencies:
   supabase_flutter: ^2.0.0
   flutter_animate: ^4.5.0
   uuid: ^4.0.0
+  device_info_plus: ^12.3.0
 
 dev_dependencies:
   flutter_test:

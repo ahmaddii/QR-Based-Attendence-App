@@ -19,3 +19,4 @@ WITH CHECK (auth.uid() = user_id);
 
 -- That's it! Now try registering a student again.
 
+

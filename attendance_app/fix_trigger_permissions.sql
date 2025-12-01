@@ -40,3 +40,4 @@ CREATE TRIGGER trigger_create_user_for_student
   EXECUTE FUNCTION create_user_for_student();
 */
 
+

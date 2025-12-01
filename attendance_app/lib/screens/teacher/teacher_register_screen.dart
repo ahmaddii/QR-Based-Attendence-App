@@ -1,7 +1,8 @@
+// teacher_register_screen.dart - UPDATED: Accept any email with OTP
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../utils/email_validator.dart'; // ADD THIS IMPORT
 import 'teacher_home_screen.dart';
 import 'teacher_login_screen.dart';
 
@@ -20,8 +21,12 @@ class _TeacherRegisterScreenState extends State<TeacherRegisterScreen> {
   final _confirmPasswordController = TextEditingController();
   final _employeeIdController = TextEditingController();
   final _departmentController = TextEditingController();
+  final _otpController = TextEditingController();
+
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _otpSent = false;
+  bool _isVerifying = false;
 
   @override
   void dispose() {
@@ -31,37 +36,73 @@ class _TeacherRegisterScreenState extends State<TeacherRegisterScreen> {
     _confirmPasswordController.dispose();
     _employeeIdController.dispose();
     _departmentController.dispose();
+    _otpController.dispose();
     super.dispose();
+  }
+
+  Future<void> _sendOTP() async {
+    // Validate email before sending OTP
+    if (_emailController.text.isEmpty) {
+      _showSnackBar(
+        'Please enter your email address',
+        isError: true,
+      );
+      return;
+    }
+
+    // Basic email validation
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegex.hasMatch(_emailController.text.trim())) {
+      _showSnackBar(
+        'Please enter a valid email address',
+        isError: true,
+      );
+      return;
+    }
+
+    setState(() => _isVerifying = true);
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final success = await authProvider.sendTeacherOTP(_emailController.text);
+
+    setState(() => _isVerifying = false);
+
+    if (success && mounted) {
+      setState(() => _otpSent = true);
+      _showSnackBar(
+        'OTP sent to your email. Please check your inbox.',
+        isError: false,
+      );
+    } else if (mounted && authProvider.errorMessage != null) {
+      _showSnackBar(authProvider.errorMessage!, isError: true);
+    }
   }
 
   Future<void> _handleRegister() async {
     if (_formKey.currentState!.validate()) {
-      if (_passwordController.text != _confirmPasswordController.text) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error_outline, color: Colors.white),
-                const SizedBox(width: 12),
-                const Expanded(child: Text('Passwords do not match')),
-              ],
-            ),
-            backgroundColor: const Color(0xFFE53935),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            margin: const EdgeInsets.all(16),
-          ),
+      if (!_otpSent) {
+        _showSnackBar(
+          'Please verify your email with OTP first',
+          isError: true,
         );
         return;
       }
 
+      if (_passwordController.text != _confirmPasswordController.text) {
+        _showSnackBar('Passwords do not match', isError: true);
+        return;
+      }
+
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final success = await authProvider.registerTeacher(
+      final success = await authProvider.verifyAndRegisterTeacher(
         email: _emailController.text,
         password: _passwordController.text,
+        otp: _otpController.text,
         name: _nameController.text,
         employeeId: _employeeIdController.text,
-        department: _departmentController.text.isEmpty ? null : _departmentController.text,
+        department: _departmentController.text.isEmpty
+            ? null
+            : _departmentController.text,
       );
 
       if (success && mounted) {
@@ -70,23 +111,31 @@ class _TeacherRegisterScreenState extends State<TeacherRegisterScreen> {
           (route) => false,
         );
       } else if (mounted && authProvider.errorMessage != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error_outline, color: Colors.white),
-                const SizedBox(width: 12),
-                Expanded(child: Text(authProvider.errorMessage!)),
-              ],
-            ),
-            backgroundColor: const Color(0xFFE53935),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            margin: const EdgeInsets.all(16),
-          ),
-        );
+        _showSnackBar(authProvider.errorMessage!, isError: true);
       }
     }
+  }
+
+  void _showSnackBar(String message, {required bool isError}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isError ? Icons.error_outline : Icons.check_circle,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 12),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor:
+            isError ? const Color(0xFFE53935) : const Color(0xFF4CAF50),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
   }
 
   @override
@@ -126,7 +175,7 @@ class _TeacherRegisterScreenState extends State<TeacherRegisterScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 20),
-                
+
                 // Icon
                 Center(
                   child: Container(
@@ -153,9 +202,9 @@ class _TeacherRegisterScreenState extends State<TeacherRegisterScreen> {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 const Text(
                   'Create Account',
                   style: TextStyle(
@@ -166,9 +215,9 @@ class _TeacherRegisterScreenState extends State<TeacherRegisterScreen> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 const SizedBox(height: 8),
-                
+
                 Text(
                   'Register as a teacher',
                   style: TextStyle(
@@ -178,9 +227,9 @@ class _TeacherRegisterScreenState extends State<TeacherRegisterScreen> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 const SizedBox(height: 32),
-                
+
                 // Name Field
                 _buildTextField(
                   controller: _nameController,
@@ -194,30 +243,146 @@ class _TeacherRegisterScreenState extends State<TeacherRegisterScreen> {
                     return null;
                   },
                 ),
-                
+
                 const SizedBox(height: 16),
-                
-                // Email Field - UPDATED WITH VALIDATION
-                _buildTextField(
-                  controller: _emailController,
-                  label: 'Faculty Email',
-                  hint: 'dr.name@szabist-isb.edu.pk',
-                  icon: Icons.email_outlined,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    // SZABIST TEACHER EMAIL VALIDATION
-                    if (!EmailValidator.isTeacherEmail(value)) {
-                      return 'Must use SZABIST faculty email\n(example@szabist-isb.edu.pk)';
-                    }
-                    return null;
-                  },
+
+                // Email Field with OTP button
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        controller: _emailController,
+                        label: 'Email Address',
+                        hint: 'your.email@example.com',
+                        icon: Icons.email_outlined,
+                        keyboardType: TextInputType.emailAddress,
+                        enabled: !_otpSent,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your email';
+                          }
+                          final emailRegex =
+                              RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                          if (!emailRegex.hasMatch(value.trim())) {
+                            return 'Please enter a valid email';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: _otpSent
+                            ? const LinearGradient(
+                                colors: [Color(0xFF4CAF50), Color(0xFF66BB6A)],
+                              )
+                            : const LinearGradient(
+                                colors: [Color(0xFF1A237E), Color(0xFF283593)],
+                              ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: (_otpSent
+                                    ? const Color(0xFF4CAF50)
+                                    : const Color(0xFF1A237E))
+                                .withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ElevatedButton(
+                        onPressed: _otpSent || _isVerifying ? null : _sendOTP,
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 16,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          backgroundColor: Colors.transparent,
+                          foregroundColor: Colors.white,
+                          shadowColor: Colors.transparent,
+                          elevation: 0,
+                        ),
+                        child: _isVerifying
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              )
+                            : Icon(
+                                _otpSent
+                                    ? Icons.check_circle
+                                    : Icons.send_rounded,
+                                size: 20,
+                              ),
+                      ),
+                    ),
+                  ],
                 ),
-                
+
+                if (_otpSent) ...[
+                  const SizedBox(height: 16),
+
+                  // OTP Field
+                  _buildTextField(
+                    controller: _otpController,
+                    label: 'OTP Code',
+                    hint: 'Enter 6-digit code',
+                    icon: Icons.pin_outlined,
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter OTP';
+                      }
+                      if (value.length != 6) {
+                        return 'OTP must be 6 digits';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // Resend OTP
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Didn't receive code? ",
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 13,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _isVerifying ? null : _sendOTP,
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                        ),
+                        child: const Text(
+                          'Resend',
+                          style: TextStyle(
+                            color: Color(0xFF1A237E),
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+
                 const SizedBox(height: 16),
-                
+
                 // Employee ID Field
                 _buildTextField(
                   controller: _employeeIdController,
@@ -231,9 +396,9 @@ class _TeacherRegisterScreenState extends State<TeacherRegisterScreen> {
                     return null;
                   },
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Department Field
                 _buildTextField(
                   controller: _departmentController,
@@ -241,9 +406,9 @@ class _TeacherRegisterScreenState extends State<TeacherRegisterScreen> {
                   hint: 'Enter your department',
                   icon: Icons.business_outlined,
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Password Field
                 _buildPasswordField(
                   controller: _passwordController,
@@ -265,9 +430,9 @@ class _TeacherRegisterScreenState extends State<TeacherRegisterScreen> {
                     return null;
                   },
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Confirm Password Field
                 _buildPasswordField(
                   controller: _confirmPasswordController,
@@ -286,9 +451,9 @@ class _TeacherRegisterScreenState extends State<TeacherRegisterScreen> {
                     return null;
                   },
                 ),
-                
+
                 const SizedBox(height: 32),
-                
+
                 // Register Button
                 Consumer<AuthProvider>(
                   builder: (context, authProvider, _) {
@@ -307,7 +472,8 @@ class _TeacherRegisterScreenState extends State<TeacherRegisterScreen> {
                         ],
                       ),
                       child: ElevatedButton(
-                        onPressed: authProvider.isLoading ? null : _handleRegister,
+                        onPressed:
+                            authProvider.isLoading ? null : _handleRegister,
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 18),
                           shape: RoundedRectangleBorder(
@@ -341,9 +507,9 @@ class _TeacherRegisterScreenState extends State<TeacherRegisterScreen> {
                     );
                   },
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Login Link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -380,7 +546,7 @@ class _TeacherRegisterScreenState extends State<TeacherRegisterScreen> {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 20),
               ],
             ),
@@ -397,6 +563,7 @@ class _TeacherRegisterScreenState extends State<TeacherRegisterScreen> {
     required IconData icon,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
+    bool enabled = true,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -413,7 +580,11 @@ class _TeacherRegisterScreenState extends State<TeacherRegisterScreen> {
       child: TextFormField(
         controller: controller,
         keyboardType: keyboardType,
-        style: const TextStyle(fontSize: 15),
+        enabled: enabled,
+        style: TextStyle(
+          fontSize: 15,
+          color: enabled ? Colors.black : Colors.grey[600],
+        ),
         validator: validator,
         decoration: InputDecoration(
           labelText: label,
@@ -459,8 +630,12 @@ class _TeacherRegisterScreenState extends State<TeacherRegisterScreen> {
               width: 2,
             ),
           ),
+          disabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: Colors.grey[300]!),
+          ),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: enabled ? Colors.white : Colors.grey[100],
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 16,

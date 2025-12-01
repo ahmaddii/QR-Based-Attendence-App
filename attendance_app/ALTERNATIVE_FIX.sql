@@ -44,3 +44,4 @@ CREATE TRIGGER trigger_create_user_for_student
 -- The actual user creation happens via auth.signUp() in your Flutter app
 
 
+
