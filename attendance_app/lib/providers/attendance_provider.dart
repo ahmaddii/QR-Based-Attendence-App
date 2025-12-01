@@ -1,7 +1,8 @@
-// providers/attendance_provider.dart (Supabase - Fixed Version)
+// providers/attendance_provider.dart (Supabase - Geofence Version)
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
+import 'package:geolocator/geolocator.dart';
 import '../models/attendance_session.dart';
 import '../models/attendance_record.dart';
 import '../config/constants.dart';
@@ -22,7 +23,31 @@ class AttendanceProvider with ChangeNotifier {
   List<AttendanceRecord> get records => _records;
   bool get isLoading => _isLoading;
 
-  // Create new attendance session
+  // ------------------- SABZIST CAMPUS GEOFENCE -------------------
+  static const double campusLat = 33.6772392337357;
+  static const double campusLng = 73.06810471533771;
+  static const double campusRadiusMeters = 250; // adjust as needed
+
+  Future<bool> _isInsideCampus() async {
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+
+      double distance = Geolocator.distanceBetween(
+        position.latitude,
+        position.longitude,
+        campusLat,
+        campusLng,
+      );
+
+      return distance <= campusRadiusMeters;
+    } catch (e) {
+      print('Error fetching location: $e');
+      return false;
+    }
+  }
+
+  // -------------------- CREATE SESSION --------------------
   Future<AttendanceSession> createSession({
     required String teacherId,
     required String subject,
@@ -31,10 +56,10 @@ class AttendanceProvider with ChangeNotifier {
   }) async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       final sessionId = _uuid.v4();
-      final qrCode = _uuid.v4(); // Generate QR code
+      final qrCode = _uuid.v4();
       final now = DateTime.now();
 
       final sessionData = {
@@ -50,7 +75,6 @@ class AttendanceProvider with ChangeNotifier {
         'created_at': now.toIso8601String(),
       };
 
-      // Insert session into database
       try {
         await _supabase.from(AppConstants.sessionsTable).insert(sessionData);
       } catch (insertError) {
@@ -74,9 +98,7 @@ class AttendanceProvider with ChangeNotifier {
       _sessions.insert(0, session);
       _isLoading = false;
 
-      // Start listening for real-time updates
       _subscribeToAttendanceUpdates(sessionId);
-
       notifyListeners();
 
       return session;
@@ -87,8 +109,7 @@ class AttendanceProvider with ChangeNotifier {
       throw Exception('Failed to create session: ${e.toString()}');
     }
   }
-  
-  // Alias for createSession
+
   Future<bool> startSession({
     required String teacherId,
     required String subject,
@@ -108,8 +129,8 @@ class AttendanceProvider with ChangeNotifier {
       rethrow;
     }
   }
-  
-  // Verify QR code and return session
+
+  // -------------------- VERIFY QR --------------------
   Future<AttendanceSession?> verifyQRCode(String qrCode) async {
     try {
       final sessionData = await _supabase
@@ -118,11 +139,11 @@ class AttendanceProvider with ChangeNotifier {
           .eq('qr_code', qrCode)
           .eq('is_active', true)
           .maybeSingle();
-      
+
       if (sessionData == null) {
         return null;
       }
-      
+
       return AttendanceSession.fromJson({
         'id': sessionData['id'],
         'teacherId': sessionData['teacher_user_id'],
@@ -139,12 +160,10 @@ class AttendanceProvider with ChangeNotifier {
     }
   }
 
-  // Subscribe to real-time attendance updates for active session
+  // -------------------- REALTIME SUBSCRIBE --------------------
   void _subscribeToAttendanceUpdates(String sessionId) {
-    // Remove existing subscription if any
     _realtimeChannel?.unsubscribe();
 
-    // Create new realtime subscription
     _realtimeChannel = _supabase
         .channel('attendance_$sessionId')
         .onPostgresChanges(
@@ -157,14 +176,13 @@ class AttendanceProvider with ChangeNotifier {
             value: sessionId,
           ),
           callback: (payload) {
-            // Real-time updates handled by database
             notifyListeners();
           },
         )
         .subscribe();
   }
 
-  // Mark student attendance
+  // -------------------- MARK ATTENDANCE WITH GEOFENCE --------------------
   Future<bool> markAttendance({
     required String sessionId,
     required String studentId,
@@ -172,8 +190,15 @@ class AttendanceProvider with ChangeNotifier {
     String? rollNumber,
   }) async {
     try {
-      print('Marking attendance - Session ID: $sessionId, Student ID: $studentId');
-      
+      // Geofence check
+      bool isOnCampus = await _isInsideCampus();
+      if (!isOnCampus) {
+        throw Exception('You must be on campus to mark attendance');
+      }
+
+      print(
+          'Marking attendance - Session ID: $sessionId, Student ID: $studentId');
+
       // Check if session exists and is active
       final sessionResponse = await _supabase
           .from(AppConstants.sessionsTable)
@@ -182,13 +207,11 @@ class AttendanceProvider with ChangeNotifier {
           .maybeSingle();
 
       if (sessionResponse == null) {
-        print('Error: Session not found with ID: $sessionId');
         throw Exception('Session not found');
       }
 
       final isActive = sessionResponse['is_active'] as bool;
       if (!isActive) {
-        print('Error: Session is not active');
         throw Exception('Session is no longer active');
       }
 
@@ -201,7 +224,6 @@ class AttendanceProvider with ChangeNotifier {
           .maybeSingle();
 
       if (existingRecord != null) {
-        print('Error: Attendance already marked for this student');
         throw Exception('Attendance already marked');
       }
 
@@ -212,19 +234,17 @@ class AttendanceProvider with ChangeNotifier {
         'student_id': studentId,
         'marked_at': DateTime.now().toIso8601String(),
       };
-      
-      print('Inserting attendance record: $attendanceData');
-      
+
       try {
-        await _supabase.from(AppConstants.attendanceTable).insert(attendanceData);
-        print('Attendance marked successfully!');
+        await _supabase
+            .from(AppConstants.attendanceTable)
+            .insert(attendanceData);
       } catch (insertError) {
         print('Database insert error: $insertError');
         print('Attendance data: $attendanceData');
         rethrow;
       }
 
-      // Update local state (realtime will also update, but this is immediate)
       notifyListeners();
       return true;
     } catch (e) {
@@ -233,7 +253,7 @@ class AttendanceProvider with ChangeNotifier {
     }
   }
 
-  // End session
+  // -------------------- END SESSION --------------------
   Future<void> endSession(String sessionId) async {
     try {
       await _supabase.from(AppConstants.sessionsTable).update({
@@ -241,7 +261,6 @@ class AttendanceProvider with ChangeNotifier {
         'end_time': DateTime.now().toIso8601String(),
       }).eq('id', sessionId);
 
-      // Unsubscribe from realtime updates
       _realtimeChannel?.unsubscribe();
       _realtimeChannel = null;
 
@@ -255,11 +274,11 @@ class AttendanceProvider with ChangeNotifier {
     }
   }
 
-  // Fetch teacher's sessions with attendance count
+  // -------------------- FETCH TEACHER SESSIONS --------------------
   Future<void> fetchTeacherSessions(String teacherId) async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       final sessionsData = await _supabase
           .from(AppConstants.sessionsTable)
@@ -284,7 +303,7 @@ class AttendanceProvider with ChangeNotifier {
 
         _sessions.add(session);
       }
-      
+
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -293,28 +312,24 @@ class AttendanceProvider with ChangeNotifier {
       throw Exception('Failed to fetch sessions: ${e.toString()}');
     }
   }
-  
-  // Alias for fetchTeacherSessions
+
   Future<void> loadTeacherSessions(String teacherId) async {
     await fetchTeacherSessions(teacherId);
   }
 
-  // Fetch student's attendance history
+  // -------------------- FETCH STUDENT ATTENDANCE --------------------
   Future<List<AttendanceRecord>> fetchStudentAttendance(
       String studentId) async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
-      // Get all attendance records for this student
-      // First get records, then fetch session details for each
       final attendanceRecords = await _supabase
           .from(AppConstants.attendanceTable)
           .select()
           .eq('student_id', studentId)
           .order('marked_at', ascending: false);
 
-      // Get student info
       final studentData = await _supabase
           .from(AppConstants.studentsTable)
           .select()
@@ -324,10 +339,9 @@ class AttendanceProvider with ChangeNotifier {
       List<AttendanceRecord> records = [];
 
       for (var record in attendanceRecords) {
-        // Fetch session details for each record
         final sessionId = record['session_id'] as String?;
         Map<String, dynamic>? sessionData;
-        
+
         if (sessionId != null) {
           try {
             final sessionResponse = await _supabase
@@ -336,11 +350,9 @@ class AttendanceProvider with ChangeNotifier {
                 .eq('id', sessionId)
                 .maybeSingle();
             sessionData = sessionResponse;
-          } catch (e) {
-            // Session might not exist, continue without it
-          }
+          } catch (e) {}
         }
-        
+
         records.add(AttendanceRecord(
           id: record['id'] ?? '',
           sessionId: record['session_id'] ?? '',
@@ -354,11 +366,11 @@ class AttendanceProvider with ChangeNotifier {
           section: sessionData?['section'],
         ));
       }
-      
+
       _records = records;
       _isLoading = false;
       notifyListeners();
-      
+
       return records;
     } catch (e) {
       _isLoading = false;
@@ -366,19 +378,17 @@ class AttendanceProvider with ChangeNotifier {
       throw Exception('Failed to fetch attendance: ${e.toString()}');
     }
   }
-  
-  // Alias for fetchStudentAttendance
+
   Future<void> loadStudentRecords(String studentId) async {
     await fetchStudentAttendance(studentId);
   }
 
-  // Fetch attendance records for a specific session
-  Future<List<AttendanceRecord>> fetchSessionAttendance(String sessionId) async {
+  Future<List<AttendanceRecord>> fetchSessionAttendance(
+      String sessionId) async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
-      // Get all attendance records for this session
       final attendanceRecords = await _supabase
           .from(AppConstants.attendanceTable)
           .select()
@@ -388,10 +398,9 @@ class AttendanceProvider with ChangeNotifier {
       List<AttendanceRecord> records = [];
 
       for (var record in attendanceRecords) {
-        // Get student info
         final studentId = record['student_id'] as String?;
         Map<String, dynamic>? studentData;
-        
+
         if (studentId != null) {
           try {
             final studentResponse = await _supabase
@@ -400,12 +409,9 @@ class AttendanceProvider with ChangeNotifier {
                 .eq('user_id', studentId)
                 .maybeSingle();
             studentData = studentResponse;
-          } catch (e) {
-            // Student might not exist
-          }
+          } catch (e) {}
         }
 
-        // Get session info
         Map<String, dynamic>? sessionData;
         try {
           final sessionResponse = await _supabase
@@ -414,10 +420,8 @@ class AttendanceProvider with ChangeNotifier {
               .eq('id', sessionId)
               .maybeSingle();
           sessionData = sessionResponse;
-        } catch (e) {
-          // Session might not exist
-        }
-        
+        } catch (e) {}
+
         records.add(AttendanceRecord(
           id: record['id'] ?? '',
           sessionId: record['session_id'] ?? '',
@@ -427,15 +431,14 @@ class AttendanceProvider with ChangeNotifier {
           markedAt: DateTime.parse(record['marked_at']),
           status: 'present',
           subject: sessionData?['subject'],
-          // Use student's class info if available, otherwise use session class info
           className: studentData?['class_name'] ?? sessionData?['class_name'],
           section: studentData?['section'] ?? sessionData?['section'],
         ));
       }
-      
+
       _isLoading = false;
       notifyListeners();
-      
+
       return records;
     } catch (e) {
       _isLoading = false;
@@ -444,7 +447,6 @@ class AttendanceProvider with ChangeNotifier {
     }
   }
 
-  // Clean up realtime subscription when provider is disposed
   @override
   void dispose() {
     _realtimeChannel?.unsubscribe();

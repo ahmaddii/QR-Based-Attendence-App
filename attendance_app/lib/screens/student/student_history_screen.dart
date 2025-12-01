@@ -24,7 +24,7 @@ class _StudentHistoryScreenState extends State<StudentHistoryScreen> {
 
   Future<void> _loadHistory() async {
     if (!mounted) return;
-    
+
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final attendanceProvider =
         Provider.of<AttendanceProvider>(context, listen: false);
@@ -50,7 +50,11 @@ class _StudentHistoryScreenState extends State<StudentHistoryScreen> {
               color: Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.arrow_back_rounded, size: 20),
+            child: const Icon(
+              Icons.arrow_back_rounded,
+              size: 20,
+              color: Colors.white,
+            ),
           ),
         ),
         title: const Text(
@@ -93,7 +97,8 @@ class _StudentHistoryScreenState extends State<StudentHistoryScreen> {
                     ),
                     child: const CircularProgressIndicator(
                       strokeWidth: 3,
-                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3949AB)),
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(Color(0xFF3949AB)),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -191,13 +196,14 @@ class _StudentHistoryScreenState extends State<StudentHistoryScreen> {
                       child: _StatItem(
                         icon: Icons.done_all_rounded,
                         label: 'Present',
-                        value: '${records.where((r) => r.status == 'present').length}',
+                        value:
+                            '${records.where((r) => r.status == 'present').length}',
                       ),
                     ),
                   ],
                 ),
               ),
-              
+
               // Records List
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -224,9 +230,9 @@ class _StudentHistoryScreenState extends State<StudentHistoryScreen> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
@@ -234,16 +240,18 @@ class _StudentHistoryScreenState extends State<StudentHistoryScreen> {
                   itemBuilder: (context, index) {
                     final record = records[index];
                     final title = record.subject ?? 'Attendance Session';
-                    final subtitle = record.className != null && record.section != null
-                        ? '${record.className} - ${record.section}'
-                        : 'Roll: ${record.rollNumber}';
+                    final subtitle =
+                        record.className != null && record.section != null
+                            ? '${record.className} - ${record.section}'
+                            : 'Roll: ${record.rollNumber}';
                     return AttendanceCard(
                       title: title,
                       subtitle: subtitle,
                       date: record.markedAt,
                       status: record.status.toUpperCase(),
-                      statusColor:
-                          record.status == 'present' ? Colors.green : Colors.red,
+                      statusColor: record.status == 'present'
+                          ? Colors.green
+                          : Colors.red,
                     );
                   },
                 ),

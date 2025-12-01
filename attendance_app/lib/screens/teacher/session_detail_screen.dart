@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:excel/excel.dart' hide Border;
+import 'package:path_provider/path_provider.dart';
+import 'package:open_file/open_file.dart';
+import 'dart:io';
 import '../../providers/attendance_provider.dart';
 import '../../models/attendance_session.dart';
 import '../../models/attendance_record.dart';
@@ -16,9 +20,11 @@ class SessionDetailScreen extends StatefulWidget {
   State<SessionDetailScreen> createState() => _SessionDetailScreenState();
 }
 
-class _SessionDetailScreenState extends State<SessionDetailScreen> with SingleTickerProviderStateMixin {
+class _SessionDetailScreenState extends State<SessionDetailScreen>
+    with SingleTickerProviderStateMixin {
   List<AttendanceRecord> _attendanceRecords = [];
   bool _isLoading = true;
+  bool _isExporting = false;
   AnimationController? _animationController;
   Animation<double>? _fadeAnimation;
   Animation<Offset>? _slideAnimation;
@@ -59,11 +65,13 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> with SingleTi
 
   Future<void> _loadAttendance() async {
     if (!mounted) return;
-    
-    final attendanceProvider = Provider.of<AttendanceProvider>(context, listen: false);
-    
+
+    final attendanceProvider =
+        Provider.of<AttendanceProvider>(context, listen: false);
+
     try {
-      final records = await attendanceProvider.fetchSessionAttendance(widget.session.id);
+      final records =
+          await attendanceProvider.fetchSessionAttendance(widget.session.id);
       if (mounted) {
         setState(() {
           _attendanceRecords = records;
@@ -96,6 +104,164 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> with SingleTi
     }
   }
 
+  Future<void> _downloadExcel() async {
+    if (_attendanceRecords.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.info_outline, color: Colors.white),
+              const SizedBox(width: 12),
+              const Expanded(child: Text('No attendance data to export')),
+            ],
+          ),
+          backgroundColor: const Color(0xFFFF9800),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          margin: const EdgeInsets.all(16),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isExporting = true;
+    });
+
+    try {
+      // Create Excel workbook
+      var excel = Excel.createExcel();
+      Sheet sheetObject = excel['Attendance'];
+
+      // Add header row with styling
+      var headerStyle = CellStyle(
+        bold: true,
+        fontSize: 12,
+        backgroundColorHex: ExcelColor.fromHexString('#1A237E'),
+        fontColorHex: ExcelColor.fromHexString('#FFFFFF'),
+      );
+
+      sheetObject.cell(CellIndex.indexByString('A1'))
+        ..value = TextCellValue('S.No')
+        ..cellStyle = headerStyle;
+      sheetObject.cell(CellIndex.indexByString('B1'))
+        ..value = TextCellValue('Student Name')
+        ..cellStyle = headerStyle;
+      sheetObject.cell(CellIndex.indexByString('C1'))
+        ..value = TextCellValue('Roll Number')
+        ..cellStyle = headerStyle;
+      sheetObject.cell(CellIndex.indexByString('D1'))
+        ..value = TextCellValue('Class')
+        ..cellStyle = headerStyle;
+      sheetObject.cell(CellIndex.indexByString('E1'))
+        ..value = TextCellValue('Section')
+        ..cellStyle = headerStyle;
+      sheetObject.cell(CellIndex.indexByString('F1'))
+        ..value = TextCellValue('Time')
+        ..cellStyle = headerStyle;
+
+      // Add data rows
+      for (int i = 0; i < _attendanceRecords.length; i++) {
+        final record = _attendanceRecords[i];
+        int rowIndex = i + 2;
+
+        sheetObject.cell(CellIndex.indexByString('A$rowIndex')).value =
+            IntCellValue(i + 1);
+        sheetObject.cell(CellIndex.indexByString('B$rowIndex')).value =
+            TextCellValue(record.studentName);
+        sheetObject.cell(CellIndex.indexByString('C$rowIndex')).value =
+            TextCellValue(record.rollNumber);
+        sheetObject.cell(CellIndex.indexByString('D$rowIndex')).value =
+            TextCellValue(record.className ?? '');
+        sheetObject.cell(CellIndex.indexByString('E$rowIndex')).value =
+            TextCellValue(record.section ?? '');
+        sheetObject.cell(CellIndex.indexByString('F$rowIndex')).value =
+            TextCellValue(
+                '${record.markedAt.hour}:${record.markedAt.minute.toString().padLeft(2, '0')}');
+      }
+
+      // Set column widths
+      sheetObject.setColumnWidth(0, 10); // S.No
+      sheetObject.setColumnWidth(1, 30); // Student Name
+      sheetObject.setColumnWidth(2, 20); // Roll Number
+      sheetObject.setColumnWidth(3, 20); // Class
+      sheetObject.setColumnWidth(4, 15); // Section
+      sheetObject.setColumnWidth(5, 15); // Time
+
+      // Generate file name
+      final fileName =
+          '${widget.session.subject}_${widget.session.className}_${widget.session.startTime.day}-${widget.session.startTime.month}-${widget.session.startTime.year}.xlsx';
+
+      // Get directory and save file
+      final Directory? directory = await getExternalStorageDirectory();
+      final String filePath = '${directory!.path}/$fileName';
+
+      // Save Excel file
+      File(filePath)
+        ..createSync(recursive: true)
+        ..writeAsBytesSync(excel.encode()!);
+
+      setState(() {
+        _isExporting = false;
+      });
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 12),
+                const Expanded(
+                    child: Text('Excel file downloaded successfully')),
+              ],
+            ),
+            backgroundColor: const Color(0xFF4CAF50),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
+            action: SnackBarAction(
+              label: 'OPEN',
+              textColor: Colors.white,
+              onPressed: () {
+                OpenFile.open(filePath);
+              },
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isExporting = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(child: Text('Error exporting file: $e')),
+              ],
+            ),
+            backgroundColor: const Color(0xFFE53935),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -111,7 +277,11 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> with SingleTi
               color: Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.arrow_back_rounded, size: 20),
+            child: const Icon(
+              Icons.arrow_back_rounded,
+              size: 20,
+              color: Colors.white, // Change back arrow color here
+            ),
           ),
         ),
         title: Text(
@@ -123,6 +293,33 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> with SingleTi
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            onPressed: _isExporting ? null : _downloadExcel,
+            icon: _isExporting
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.download_rounded,
+                      size: 20,
+                      color: Colors.white, // Change download icon color here
+                    ),
+                  ),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: _isLoading
           ? const Center(
@@ -137,7 +334,8 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> with SingleTi
                 FadeTransition(
                   opacity: _fadeAnimation ?? const AlwaysStoppedAnimation(1.0),
                   child: SlideTransition(
-                    position: _slideAnimation ?? AlwaysStoppedAnimation(Offset.zero),
+                    position:
+                        _slideAnimation ?? AlwaysStoppedAnimation(Offset.zero),
                     child: Container(
                       margin: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
@@ -177,7 +375,8 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> with SingleTi
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         widget.session.subject,
@@ -202,9 +401,9 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> with SingleTi
                                 ),
                               ],
                             ),
-                            
+
                             const SizedBox(height: 20),
-                            
+
                             // Info Chips
                             Wrap(
                               spacing: 8,
@@ -219,14 +418,18 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> with SingleTi
                                   '${widget.session.startTime.hour}:${widget.session.startTime.minute.toString().padLeft(2, '0')}',
                                 ),
                                 _buildInfoChip(
-                                  widget.session.isActive ? Icons.play_circle_rounded : Icons.check_circle_rounded,
-                                  widget.session.isActive ? 'Active' : 'Completed',
+                                  widget.session.isActive
+                                      ? Icons.play_circle_rounded
+                                      : Icons.check_circle_rounded,
+                                  widget.session.isActive
+                                      ? 'Active'
+                                      : 'Completed',
                                 ),
                               ],
                             ),
-                            
+
                             const SizedBox(height: 20),
-                            
+
                             // Total Count
                             Container(
                               padding: const EdgeInsets.all(16),
@@ -239,7 +442,8 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> with SingleTi
                                 ),
                               ),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   const Text(
                                     'Total Attendance',
@@ -276,11 +480,12 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> with SingleTi
                     ),
                   ),
                 ),
-                
+
                 // List Header
                 if (_attendanceRecords.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     child: Row(
                       children: [
                         Text(
@@ -313,7 +518,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> with SingleTi
                       ],
                     ),
                   ),
-                
+
                 // Attendance List
                 Expanded(
                   child: _attendanceRecords.isEmpty
@@ -381,12 +586,16 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> with SingleTi
                                       height: 50,
                                       decoration: BoxDecoration(
                                         gradient: const LinearGradient(
-                                          colors: [Color(0xFF4CAF50), Color(0xFF66BB6A)],
+                                          colors: [
+                                            Color(0xFF4CAF50),
+                                            Color(0xFF66BB6A)
+                                          ],
                                         ),
                                         borderRadius: BorderRadius.circular(14),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: const Color(0xFF4CAF50).withOpacity(0.3),
+                                            color: const Color(0xFF4CAF50)
+                                                .withOpacity(0.3),
                                             blurRadius: 8,
                                             offset: const Offset(0, 4),
                                           ),
@@ -395,7 +604,8 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> with SingleTi
                                       child: Center(
                                         child: Text(
                                           record.studentName.isNotEmpty
-                                              ? record.studentName[0].toUpperCase()
+                                              ? record.studentName[0]
+                                                  .toUpperCase()
                                               : '?',
                                           style: const TextStyle(
                                             color: Colors.white,
@@ -405,13 +615,14 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> with SingleTi
                                         ),
                                       ),
                                     ),
-                                    
+
                                     const SizedBox(width: 16),
-                                    
+
                                     // Details
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             record.studentName.isNotEmpty
@@ -444,7 +655,8 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> with SingleTi
                                               ],
                                             ),
                                           const SizedBox(height: 4),
-                                          if (record.className != null && record.className!.isNotEmpty)
+                                          if (record.className != null &&
+                                              record.className!.isNotEmpty)
                                             Row(
                                               children: [
                                                 Icon(
@@ -484,7 +696,7 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> with SingleTi
                                         ],
                                       ),
                                     ),
-                                    
+
                                     // Status Badge
                                     Container(
                                       padding: const EdgeInsets.symmetric(
@@ -492,10 +704,12 @@ class _SessionDetailScreenState extends State<SessionDetailScreen> with SingleTi
                                         vertical: 8,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFF4CAF50).withOpacity(0.1),
+                                        color: const Color(0xFF4CAF50)
+                                            .withOpacity(0.1),
                                         borderRadius: BorderRadius.circular(10),
                                         border: Border.all(
-                                          color: const Color(0xFF4CAF50).withOpacity(0.3),
+                                          color: const Color(0xFF4CAF50)
+                                              .withOpacity(0.3),
                                           width: 1,
                                         ),
                                       ),

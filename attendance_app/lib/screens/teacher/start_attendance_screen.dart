@@ -136,7 +136,11 @@ class _StartAttendanceScreenState extends State<StartAttendanceScreen> {
               color: Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.arrow_back_rounded, size: 20),
+            child: const Icon(
+              Icons.arrow_back_rounded,
+              size: 20,
+              color: Colors.white, // Change back arrow color here
+            ),
           ),
         ),
         title: const Text(
@@ -158,7 +162,7 @@ class _StartAttendanceScreenState extends State<StartAttendanceScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 8),
-                
+
                 // QR Icon
                 Center(
                   child: Container(
@@ -185,9 +189,9 @@ class _StartAttendanceScreenState extends State<StartAttendanceScreen> {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 32),
-                
+
                 const Text(
                   'Create Attendance Session',
                   style: TextStyle(
@@ -198,9 +202,9 @@ class _StartAttendanceScreenState extends State<StartAttendanceScreen> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 const SizedBox(height: 10),
-                
+
                 Text(
                   'Fill in the details to generate QR code',
                   style: TextStyle(
@@ -210,9 +214,9 @@ class _StartAttendanceScreenState extends State<StartAttendanceScreen> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 const SizedBox(height: 40),
-                
+
                 // Subject Field
                 Container(
                   decoration: BoxDecoration(
@@ -288,9 +292,9 @@ class _StartAttendanceScreenState extends State<StartAttendanceScreen> {
                     },
                   ),
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Class Field
                 Container(
                   decoration: BoxDecoration(
@@ -366,9 +370,9 @@ class _StartAttendanceScreenState extends State<StartAttendanceScreen> {
                     },
                   ),
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Section Field
                 Container(
                   decoration: BoxDecoration(
@@ -444,9 +448,9 @@ class _StartAttendanceScreenState extends State<StartAttendanceScreen> {
                     },
                   ),
                 ),
-                
+
                 const SizedBox(height: 40),
-                
+
                 // Info Card
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -486,9 +490,9 @@ class _StartAttendanceScreenState extends State<StartAttendanceScreen> {
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(height: 32),
-                
+
                 // Generate Button
                 Consumer<AttendanceProvider>(
                   builder: (context, attendanceProvider, child) {
@@ -542,7 +546,7 @@ class _StartAttendanceScreenState extends State<StartAttendanceScreen> {
                     );
                   },
                 ),
-                
+
                 const SizedBox(height: 20),
               ],
             ),

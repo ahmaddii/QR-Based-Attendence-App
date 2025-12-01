@@ -13,10 +13,7 @@ class RoleSelectionScreen extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFF5F7FA),
-              Color(0xFFE8EAF6),
-            ],
+            colors: [Color(0xFFF5F7FA), Color(0xFFE8EAF6)],
           ),
         ),
         child: SafeArea(
@@ -26,7 +23,7 @@ class RoleSelectionScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 40),
-                
+
                 // Logo/Icon at top
                 Container(
                   padding: const EdgeInsets.all(20),
@@ -39,10 +36,13 @@ class RoleSelectionScreen extends StatelessWidget {
                     size: 50,
                     color: Color(0xFF1A237E),
                   ),
-                ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack).fadeIn(),
-                
+                )
+                    .animate()
+                    .scale(duration: 600.ms, curve: Curves.easeOutBack)
+                    .fadeIn(),
+
                 const SizedBox(height: 32),
-                
+
                 Text(
                   'Welcome!',
                   style: const TextStyle(
@@ -53,9 +53,9 @@ class RoleSelectionScreen extends StatelessWidget {
                   ),
                   textAlign: TextAlign.center,
                 ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.3, end: 0),
-                
+
                 const SizedBox(height: 12),
-                
+
                 Text(
                   'Choose your role to continue',
                   style: TextStyle(
@@ -66,7 +66,7 @@ class RoleSelectionScreen extends StatelessWidget {
                   ),
                   textAlign: TextAlign.center,
                 ).animate().fadeIn(delay: 300.ms),
-                
+
                 const SizedBox(height: 60),
 
                 // Teacher Card
@@ -97,7 +97,10 @@ class RoleSelectionScreen extends StatelessWidget {
 
                 // Bottom decoration
                 Container(
-                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 24,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.7),
                     borderRadius: BorderRadius.circular(16),

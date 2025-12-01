@@ -17,9 +17,13 @@ void main() async {
 
   // Check if Supabase is configured
   if (!SupabaseConfig.isConfigured) {
-    print('⚠️  WARNING: Supabase credentials not configured!');
-    print('Please update lib/config/supabase_config.dart with your Supabase credentials.');
-    print('Get your credentials from: https://supabase.com/dashboard/project/_/settings/api');
+    print(' WARNING: Supabase credentials not configured!');
+    print(
+      'Please update lib/config/supabase_config.dart with your Supabase credentials.',
+    );
+    print(
+      'Get your credentials from: https://supabase.com/dashboard/project/_/settings/api',
+    );
   }
 
   // Initialize Supabase
@@ -30,7 +34,9 @@ void main() async {
     );
   } catch (e) {
     print('❌ Error initializing Supabase: $e');
-    print('Please check your Supabase configuration in lib/config/supabase_config.dart');
+    print(
+      'Please check your Supabase configuration in lib/config/supabase_config.dart',
+    );
     rethrow;
   }
 
@@ -50,7 +56,9 @@ class AttendanceApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Smart Attendance',
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
+        theme: AppTheme.lightTheme.copyWith(
+          textTheme: AppTheme.lightTheme.textTheme.apply(fontFamily: 'Poppins'),
+        ),
         home: const SplashScreen(),
         routes: {
           '/role-selection': (context) => const RoleSelectionScreen(),

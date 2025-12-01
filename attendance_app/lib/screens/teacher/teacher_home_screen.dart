@@ -35,11 +35,12 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
 
   Future<void> _loadSessions() async {
     if (!mounted) return;
-    
+
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final attendanceProvider = Provider.of<AttendanceProvider>(context, listen: false);
+    final attendanceProvider =
+        Provider.of<AttendanceProvider>(context, listen: false);
     final teacher = authProvider.currentTeacher;
-    
+
     if (teacher != null) {
       await attendanceProvider.fetchTeacherSessions(teacher.id);
     }
@@ -63,7 +64,11 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFF1A237E), Color(0xFF283593), Color(0xFF3949AB)],
+                  colors: [
+                    Color(0xFF1A237E),
+                    Color(0xFF283593),
+                    Color(0xFF3949AB)
+                  ],
                 ),
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(40),
@@ -121,7 +126,8 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                                     ),
                                     title: Row(
                                       children: const [
-                                        Icon(Icons.logout_rounded, color: Color(0xFFE53935)),
+                                        Icon(Icons.logout_rounded,
+                                            color: Color(0xFFE53935)),
                                         SizedBox(width: 12),
                                         Text('Logout'),
                                       ],
@@ -132,18 +138,23 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                                     ),
                                     actions: [
                                       TextButton(
-                                        onPressed: () => Navigator.pop(context, false),
+                                        onPressed: () =>
+                                            Navigator.pop(context, false),
                                         child: Text(
                                           'Cancel',
-                                          style: TextStyle(color: Colors.grey[600]),
+                                          style: TextStyle(
+                                              color: Colors.grey[600]),
                                         ),
                                       ),
                                       ElevatedButton(
-                                        onPressed: () => Navigator.pop(context, true),
+                                        onPressed: () =>
+                                            Navigator.pop(context, true),
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFFE53935),
+                                          backgroundColor:
+                                              const Color(0xFFE53935),
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(10),
+                                            borderRadius:
+                                                BorderRadius.circular(10),
                                           ),
                                           padding: const EdgeInsets.symmetric(
                                             horizontal: 24,
@@ -184,21 +195,25 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                         builder: (context, attendanceProvider, child) {
                           final sessions = attendanceProvider.sessions;
                           final today = DateTime.now();
-                          final todayStart = DateTime(today.year, today.month, today.day);
-                          final weekStart = todayStart.subtract(Duration(days: today.weekday - 1));
-                          
-                          final todayCount = sessions.where((s) => 
-                            s.startTime.isAfter(todayStart) || 
-                            s.startTime.isAtSameMomentAs(todayStart)
-                          ).length;
-                          
-                          final weekCount = sessions.where((s) => 
-                            s.startTime.isAfter(weekStart) || 
-                            s.startTime.isAtSameMomentAs(weekStart)
-                          ).length;
-                          
+                          final todayStart =
+                              DateTime(today.year, today.month, today.day);
+                          final weekStart = todayStart
+                              .subtract(Duration(days: today.weekday - 1));
+
+                          final todayCount = sessions
+                              .where((s) =>
+                                  s.startTime.isAfter(todayStart) ||
+                                  s.startTime.isAtSameMomentAs(todayStart))
+                              .length;
+
+                          final weekCount = sessions
+                              .where((s) =>
+                                  s.startTime.isAfter(weekStart) ||
+                                  s.startTime.isAtSameMomentAs(weekStart))
+                              .length;
+
                           final totalCount = sessions.length;
-                          
+
                           return Row(
                             children: [
                               Expanded(
@@ -297,7 +312,8 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                           () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const TeacherHistoryScreen(),
+                              builder: (context) =>
+                                  const TeacherHistoryScreen(),
                             ),
                           ),
                         ),
@@ -311,7 +327,8 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                           () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const TeacherReportsScreen(),
+                              builder: (context) =>
+                                  const TeacherReportsScreen(),
                             ),
                           ),
                         ),
@@ -325,14 +342,14 @@ class _TeacherHomeScreenState extends State<TeacherHomeScreen> {
                           () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const TeacherSettingsScreen(),
+                              builder: (context) =>
+                                  const TeacherSettingsScreen(),
                             ),
                           ),
                         ),
                       ),
                     ],
                   ),
-
                 ],
               ),
             ),

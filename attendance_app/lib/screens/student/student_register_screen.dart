@@ -50,8 +50,9 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
             ),
             backgroundColor: const Color(0xFFE53935),
             behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             margin: const EdgeInsets.all(16),
           ),
         );
@@ -85,8 +86,9 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
             ),
             backgroundColor: const Color(0xFFE53935),
             behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             margin: const EdgeInsets.all(16),
           ),
         );
@@ -334,8 +336,9 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                         ],
                       ),
                       child: ElevatedButton(
-                        onPressed:
-                            authProvider.isLoading ? null : _handleRegister,
+                        onPressed: authProvider.isLoading
+                            ? null
+                            : _handleRegister,
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 18),
                           shape: RoundedRectangleBorder(
@@ -378,10 +381,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
                   children: [
                     Text(
                       'Already have an account? ',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 15,
-                      ),
+                      style: TextStyle(color: Colors.grey[600], fontSize: 15),
                     ),
                     TextButton(
                       onPressed: () {
@@ -455,11 +455,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
               color: const Color(0xFF3949AB).withOpacity(0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(
-              icon,
-              color: const Color(0xFF3949AB),
-              size: 20,
-            ),
+            child: Icon(icon, color: const Color(0xFF3949AB), size: 20),
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
@@ -471,10 +467,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(
-              color: Color(0xFF3949AB),
-              width: 2,
-            ),
+            borderSide: const BorderSide(color: Color(0xFF3949AB), width: 2),
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
@@ -482,10 +475,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(
-              color: Color(0xFFE53935),
-              width: 2,
-            ),
+            borderSide: const BorderSide(color: Color(0xFFE53935), width: 2),
           ),
           filled: true,
           fillColor: Colors.white,
@@ -560,10 +550,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(
-              color: Color(0xFF3949AB),
-              width: 2,
-            ),
+            borderSide: const BorderSide(color: Color(0xFF3949AB), width: 2),
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
@@ -571,10 +558,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(
-              color: Color(0xFFE53935),
-              width: 2,
-            ),
+            borderSide: const BorderSide(color: Color(0xFFE53935), width: 2),
           ),
           filled: true,
           fillColor: Colors.white,

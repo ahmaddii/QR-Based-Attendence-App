@@ -1,4 +1,4 @@
-// auth_provider.dart - WITH DEVICE BINDING ADDED
+// auth_provider.dart - WITH DEVICE BINDING ADDED AND DEVICE ID ON REGISTRATION
 
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -281,8 +281,7 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // -------------------- STUDENT REGISTER --------------------
-
+  // -------------------- STUDENT REGISTER (DEVICE ID CAPTURED) --------------------
   Future<bool> registerStudent({
     required String email,
     required String password,
@@ -322,6 +321,9 @@ class AuthProvider with ChangeNotifier {
         throw Exception('Registration failed. Please try again.');
       }
 
+      // ----------------- GET DEVICE ID -----------------
+      final deviceId = await _getDeviceId();
+
       final studentData = await _supabase
           .from(AppConstants.studentsTable)
           .insert({
@@ -331,7 +333,7 @@ class AuthProvider with ChangeNotifier {
             'roll_number': rollNumber,
             'class_name': className,
             'section': section,
-            'device_id': null,
+            'device_id': deviceId, // <- DEVICE ID SAVED HERE
             'created_at': DateTime.now().toIso8601String(),
           })
           .select()

@@ -24,7 +24,7 @@ class _TeacherHistoryScreenState extends State<TeacherHistoryScreen> {
 
   Future<void> _loadHistory() async {
     if (!mounted) return;
-    
+
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final attendanceProvider =
         Provider.of<AttendanceProvider>(context, listen: false);
@@ -50,7 +50,11 @@ class _TeacherHistoryScreenState extends State<TeacherHistoryScreen> {
               color: Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.arrow_back_rounded, size: 20),
+            child: const Icon(
+              Icons.arrow_back_rounded,
+              size: 20,
+              color: Colors.white, // Change back arrow color here
+            ),
           ),
         ),
         title: const Text(
@@ -72,7 +76,11 @@ class _TeacherHistoryScreenState extends State<TeacherHistoryScreen> {
                   color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.refresh_rounded, size: 20),
+                child: const Icon(
+                  Icons.refresh_rounded,
+                  size: 20,
+                  color: Colors.white, // Change refresh icon color here
+                ),
               ),
             ),
           ),
@@ -93,7 +101,8 @@ class _TeacherHistoryScreenState extends State<TeacherHistoryScreen> {
                     ),
                     child: const CircularProgressIndicator(
                       strokeWidth: 3,
-                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1A237E)),
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(Color(0xFF1A237E)),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -197,7 +206,7 @@ class _TeacherHistoryScreenState extends State<TeacherHistoryScreen> {
                   ],
                 ),
               ),
-              
+
               // Sessions List Header
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -224,9 +233,9 @@ class _TeacherHistoryScreenState extends State<TeacherHistoryScreen> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Sessions List
               Expanded(
                 child: ListView.builder(
@@ -239,7 +248,8 @@ class _TeacherHistoryScreenState extends State<TeacherHistoryScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => SessionDetailScreen(session: session),
+                            builder: (context) =>
+                                SessionDetailScreen(session: session),
                           ),
                         );
                       },
@@ -248,7 +258,8 @@ class _TeacherHistoryScreenState extends State<TeacherHistoryScreen> {
                         subtitle: '${session.className} - ${session.section}',
                         date: session.startTime,
                         status: session.isActive ? 'Active' : 'Completed',
-                        statusColor: session.isActive ? Colors.green : Colors.grey,
+                        statusColor:
+                            session.isActive ? Colors.green : Colors.grey,
                       ),
                     );
                   },

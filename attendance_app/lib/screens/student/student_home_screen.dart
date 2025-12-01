@@ -19,6 +19,21 @@ class StudentHomeScreen extends StatelessWidget {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: const Color(0xFF3949AB),
+        leading: IconButton(
+          onPressed: () => Navigator.of(context).pop(),
+          icon: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.arrow_back_rounded,
+              size: 20,
+              color: Colors.white, // Change back arrow color here
+            ),
+          ),
+        ),
         title: const Text(
           'Student Dashboard',
           style: TextStyle(
@@ -37,7 +52,11 @@ class StudentHomeScreen extends StatelessWidget {
                   color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.logout_rounded, size: 20),
+                child: const Icon(
+                  Icons.logout_rounded,
+                  size: 20,
+                  color: Colors.white, // Change logout icon color here
+                ),
               ),
               onPressed: () async {
                 await authProvider.logout();
@@ -99,11 +118,16 @@ class StudentHomeScreen extends StatelessWidget {
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 gradient: const LinearGradient(
-                                  colors: [Color(0xFF3949AB), Color(0xFF5C6BC0)],
+                                  colors: [
+                                    Color(0xFF3949AB),
+                                    Color(0xFF5C6BC0),
+                                  ],
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFF3949AB).withOpacity(0.3),
+                                    color: const Color(
+                                      0xFF3949AB,
+                                    ).withOpacity(0.3),
                                     blurRadius: 12,
                                     offset: const Offset(0, 4),
                                   ),
@@ -113,7 +137,8 @@ class StudentHomeScreen extends StatelessWidget {
                                 radius: 32,
                                 backgroundColor: Colors.white,
                                 child: Text(
-                                  student?.name.substring(0, 1).toUpperCase() ?? 'S',
+                                  student?.name.substring(0, 1).toUpperCase() ??
+                                      'S',
                                   style: const TextStyle(
                                     fontSize: 28,
                                     color: Color(0xFF3949AB),
@@ -196,9 +221,9 @@ class StudentHomeScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 28),
-              
+
               // Quick Actions Section
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -228,7 +253,7 @@ class StudentHomeScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 20),
-                    
+
                     // Action Cards Grid
                     SizedBox(
                       height: MediaQuery.of(context).size.width * 0.44,
@@ -248,7 +273,8 @@ class StudentHomeScreen extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const QRScannerScreen(),
+                                    builder: (context) =>
+                                        const QRScannerScreen(),
                                   ),
                                 );
                               },
@@ -269,7 +295,8 @@ class StudentHomeScreen extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const StudentHistoryScreen(),
+                                    builder: (context) =>
+                                        const StudentHistoryScreen(),
                                   ),
                                 );
                               },
@@ -281,7 +308,7 @@ class StudentHomeScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 32),
             ],
           ),
@@ -357,11 +384,7 @@ class _ActionCardState extends State<_ActionCard> {
                           width: 2,
                         ),
                       ),
-                      child: Icon(
-                        widget.icon,
-                        size: 36,
-                        color: Colors.white,
-                      ),
+                      child: Icon(widget.icon, size: 36, color: Colors.white),
                     ),
                     const SizedBox(height: 12),
                     Text(
