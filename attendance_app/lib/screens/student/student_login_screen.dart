@@ -48,7 +48,8 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
             ),
             backgroundColor: const Color(0xFFE53935),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             margin: const EdgeInsets.all(16),
           ),
         );
@@ -75,7 +76,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 20),
-                
+
                 // Back Button
                 Align(
                   alignment: Alignment.centerLeft,
@@ -101,9 +102,9 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 20),
-                
+
                 // Logo/Icon
                 Center(
                   child: Container(
@@ -130,9 +131,9 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 32),
-                
+
                 const Text(
                   'Welcome Back!',
                   style: TextStyle(
@@ -143,9 +144,9 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 const SizedBox(height: 8),
-                
+
                 Text(
                   'Login to mark your attendance',
                   style: TextStyle(
@@ -155,9 +156,9 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 const SizedBox(height: 48),
-                
+
                 // Email Field
                 Container(
                   decoration: BoxDecoration(
@@ -237,9 +238,9 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                     },
                   ),
                 ),
-                
+
                 const SizedBox(height: 20),
-                
+
                 // Password Field
                 Container(
                   decoration: BoxDecoration(
@@ -332,9 +333,9 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                     },
                   ),
                 ),
-                
+
                 const SizedBox(height: 40),
-                
+
                 // Login Button
                 Consumer<AuthProvider>(
                   builder: (context, authProvider, _) {
@@ -387,9 +388,9 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                     );
                   },
                 ),
-                
+
                 const SizedBox(height: 32),
-                
+
                 // Register Link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -426,7 +427,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 20),
               ],
             ),

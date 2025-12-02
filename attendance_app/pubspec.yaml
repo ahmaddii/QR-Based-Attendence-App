@@ -20,7 +20,6 @@ dependencies:
   flutter_animate: ^4.5.0
   uuid: ^4.0.0
   device_info_plus: ^12.3.0
-  geolocator: ^14.0.2
   path_provider: ^2.1.5
   open_file: ^3.5.10
   excel: ^4.0.6

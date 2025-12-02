@@ -1,8 +1,7 @@
-// providers/attendance_provider.dart (Supabase - Geofence Version)
+// providers/attendance_provider.dart (Supabase - Without Geofence)
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
-import 'package:geolocator/geolocator.dart';
 import '../models/attendance_session.dart';
 import '../models/attendance_record.dart';
 import '../config/constants.dart';
@@ -22,30 +21,6 @@ class AttendanceProvider with ChangeNotifier {
   AttendanceSession? get currentSession => _activeSession;
   List<AttendanceRecord> get records => _records;
   bool get isLoading => _isLoading;
-
-  // ------------------- SABZIST CAMPUS GEOFENCE -------------------
-  static const double campusLat = 33.6772392337357;
-  static const double campusLng = 73.06810471533771;
-  static const double campusRadiusMeters = 250; // adjust as needed
-
-  Future<bool> _isInsideCampus() async {
-    try {
-      Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
-
-      double distance = Geolocator.distanceBetween(
-        position.latitude,
-        position.longitude,
-        campusLat,
-        campusLng,
-      );
-
-      return distance <= campusRadiusMeters;
-    } catch (e) {
-      print('Error fetching location: $e');
-      return false;
-    }
-  }
 
   // -------------------- CREATE SESSION --------------------
   Future<AttendanceSession> createSession({
@@ -182,7 +157,7 @@ class AttendanceProvider with ChangeNotifier {
         .subscribe();
   }
 
-  // -------------------- MARK ATTENDANCE WITH GEOFENCE --------------------
+  // -------------------- MARK ATTENDANCE --------------------
   Future<bool> markAttendance({
     required String sessionId,
     required String studentId,
@@ -190,12 +165,6 @@ class AttendanceProvider with ChangeNotifier {
     String? rollNumber,
   }) async {
     try {
-      // Geofence check
-      bool isOnCampus = await _isInsideCampus();
-      if (!isOnCampus) {
-        throw Exception('You must be on campus to mark attendance');
-      }
-
       print(
           'Marking attendance - Session ID: $sessionId, Student ID: $studentId');
 
