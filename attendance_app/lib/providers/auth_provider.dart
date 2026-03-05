@@ -29,6 +29,12 @@ class AuthProvider with ChangeNotifier {
     return null;
   }
 
+  String? get currentUserId {
+    if (_userRole == 'teacher') return _currentTeacher?.id;
+    if (_userRole == 'student') return _currentStudent?.id;
+    return null;
+  }
+
   void setLoading(bool value) {
     _isLoading = value;
     notifyListeners();

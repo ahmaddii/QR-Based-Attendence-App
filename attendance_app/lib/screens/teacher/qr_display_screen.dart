@@ -3,8 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../providers/attendance_provider.dart';
 import '../../config/constants.dart';
+import 'dart:async';
 import 'teacher_home_screen.dart';
 import 'session_detail_screen.dart';
+import '../../services/qr_service.dart';
 
 class QRDisplayScreen extends StatefulWidget {
   const QRDisplayScreen({super.key});
@@ -13,10 +15,14 @@ class QRDisplayScreen extends StatefulWidget {
   State<QRDisplayScreen> createState() => _QRDisplayScreenState();
 }
 
-class _QRDisplayScreenState extends State<QRDisplayScreen> with SingleTickerProviderStateMixin {
+class _QRDisplayScreenState extends State<QRDisplayScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
+
+  Timer? _qrTimer;
+  String? _currentQRData;
 
   @override
   void initState() {
@@ -37,10 +43,44 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> with SingleTickerProv
     );
 
     _animationController.forward();
+
+    // Defer initialization of QR code data until the context is available
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startQRRotationTimer();
+    });
+  }
+
+  void _startQRRotationTimer() {
+    _generateQRData(); // Initial generation
+    _qrTimer = Timer.periodic(AppConstants.qrCodeRefreshInterval, (timer) {
+      if (mounted) {
+        _generateQRData();
+      }
+    });
+  }
+
+  void _generateQRData() {
+    final attendanceProvider =
+        Provider.of<AttendanceProvider>(context, listen: false);
+    final session = attendanceProvider.currentSession;
+
+    if (session != null) {
+      final qrService = QRService();
+      setState(() {
+        _currentQRData = qrService.generateQRData(
+          sessionId: session.id,
+          teacherId: session.teacherId,
+          subject: session.subject,
+          className: session.className,
+          section: session.section,
+        );
+      });
+    }
   }
 
   @override
   void dispose() {
+    _qrTimer?.cancel();
     _animationController.dispose();
     super.dispose();
   }
@@ -72,7 +112,7 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> with SingleTickerProv
           child: Column(
             children: [
               const SizedBox(height: 20),
-              
+
               // QR Code Card with Animation
               FadeTransition(
                 opacity: _fadeAnimation,
@@ -116,9 +156,9 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> with SingleTickerProv
                               ),
                             ),
                           ),
-                          
+
                           const SizedBox(height: 16),
-                          
+
                           // Class Info
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -149,13 +189,13 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> with SingleTickerProv
                               ],
                             ),
                           ),
-                          
+
                           const SizedBox(height: 40),
-                          
+
                           // QR Code - BIG!
-                          if (session != null)
+                          if (_currentQRData != null)
                             QrImageView(
-                              data: session.qrCode,
+                              data: _currentQRData!,
                               version: QrVersions.auto,
                               size: 280,
                               backgroundColor: Colors.white,
@@ -167,10 +207,17 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> with SingleTickerProv
                                 dataModuleShape: QrDataModuleShape.square,
                                 color: Color(0xFF1A237E),
                               ),
+                            )
+                          else
+                            const SizedBox(
+                              height: 280,
+                              child: Center(
+                                child: CircularProgressIndicator(),
+                              ),
                             ),
-                          
+
                           const SizedBox(height: 40),
-                          
+
                           // Info Card
                           Container(
                             padding: const EdgeInsets.all(16),
@@ -187,7 +234,8 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> with SingleTickerProv
                                 Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF4CAF50).withOpacity(0.2),
+                                    color: const Color(0xFF4CAF50)
+                                        .withOpacity(0.2),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: const Icon(
@@ -216,9 +264,9 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> with SingleTickerProv
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // Action Buttons
               Row(
                 children: [
@@ -244,7 +292,8 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> with SingleTickerProv
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => SessionDetailScreen(session: session),
+                                builder: (context) =>
+                                    SessionDetailScreen(session: session),
                               ),
                             );
                           }
@@ -280,9 +329,9 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> with SingleTickerProv
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(width: 16),
-                  
+
                   // End Session Button
                   Expanded(
                     child: Container(
@@ -310,7 +359,8 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> with SingleTickerProv
                               ),
                               title: Row(
                                 children: const [
-                                  Icon(Icons.warning_rounded, color: Color(0xFFE53935)),
+                                  Icon(Icons.warning_rounded,
+                                      color: Color(0xFFE53935)),
                                   SizedBox(width: 12),
                                   Text('End Session?'),
                                 ],
@@ -320,7 +370,8 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> with SingleTickerProv
                               ),
                               actions: [
                                 TextButton(
-                                  onPressed: () => Navigator.pop(context, false),
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
                                   child: Text(
                                     'Cancel',
                                     style: TextStyle(color: Colors.grey[600]),
@@ -345,7 +396,8 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> with SingleTickerProv
                             if (context.mounted) {
                               Navigator.of(context).pushAndRemoveUntil(
                                 MaterialPageRoute(
-                                  builder: (context) => const TeacherHomeScreen(),
+                                  builder: (context) =>
+                                      const TeacherHomeScreen(),
                                 ),
                                 (route) => false,
                               );
@@ -385,7 +437,7 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> with SingleTickerProv
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 20),
             ],
           ),

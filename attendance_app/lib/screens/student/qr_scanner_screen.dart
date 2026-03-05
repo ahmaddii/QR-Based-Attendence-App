@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/attendance_provider.dart';
-import '../../models/student.dart';
 import '../../models/attendance_session.dart';
 import '../../services/qr_service.dart';
+import '../../config/constants.dart';
+import 'package:geolocator/geolocator.dart';
 
 class QRScannerScreen extends StatefulWidget {
   const QRScannerScreen({super.key});
@@ -16,186 +16,226 @@ class QRScannerScreen extends StatefulWidget {
 }
 
 class _QRScannerScreenState extends State<QRScannerScreen> {
-  MobileScannerController controller = MobileScannerController();
-  bool isProcessing = false;
+  bool _isProcessing = false;
+  MobileScannerController _cameraController = MobileScannerController();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLocationPermission();
+  }
+
+  Future<void> _checkLocationPermission() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      _showMessage(
+          'Location services are disabled. Please enable them to mark attendance.',
+          isError: true);
+      return;
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        _showMessage('Location permissions are denied.', isError: true);
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      _showMessage(
+          'Location permissions are permanently denied, we cannot request permissions.',
+          isError: true);
+      return;
+    }
+  }
 
   @override
   void dispose() {
-    controller.dispose();
+    _cameraController.dispose();
     super.dispose();
   }
 
-  Future<void> _handleScan(String qrData) async {
+  void _handleScan(String qrData) async {
+    if (_isProcessing) return;
+
     setState(() {
-      isProcessing = true;
+      _isProcessing = true;
     });
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final attendanceProvider =
         Provider.of<AttendanceProvider>(context, listen: false);
-    final student = authProvider.currentUser as Student?;
 
+    final student = authProvider.currentStudent;
     if (student == null) {
       _showMessage('Student not found', isError: true);
       setState(() {
-        isProcessing = false;
+        _isProcessing = false;
       });
       return;
     }
 
-    // Get the authenticated user ID from Supabase (this is what the foreign key expects)
-    // The foreign key constraint expects the ID from auth.users table, not from students table
-    final supabase = Supabase.instance.client;
-    final currentUser = supabase.auth.currentUser;
-    final studentUserId = currentUser?.id;
-
-    if (studentUserId == null) {
-      _showMessage('User not authenticated', isError: true);
-      setState(() {
-        isProcessing = false;
-      });
-      return;
-    }
-
-    print('Student ID from auth.users: $studentUserId');
+    print('Processing QR scan for student: ${student.name}');
     print('Student ID from model: ${student.id}');
 
-    // Try to verify QR code - it could be a UUID directly or JSON
-    AttendanceSession? session;
-    
-    print('Scanned QR Code: $qrData');
-    
-    // First try as direct QR code (UUID)
-    session = await attendanceProvider.verifyQRCode(qrData);
-    print('Session found (direct): ${session != null}');
-    
-    // If that fails, try parsing as JSON (if QR service format is used)
-    if (session == null) {
-      try {
-        final qrService = QRService();
-        final parsedData = qrService.parseQRData(qrData);
-        if (parsedData != null && parsedData.containsKey('sessionId')) {
-          final sessionId = parsedData['sessionId'] as String;
-          print('Parsed sessionId from JSON: $sessionId');
-          session = await attendanceProvider.verifyQRCode(sessionId);
-          print('Session found (from JSON): ${session != null}');
-        }
-      } catch (e) {
-        print('Error parsing QR as JSON: $e');
-        // Not JSON format, continue
-      }
-    }
-
-    if (session == null) {
-      print('Session verification failed - QR code not found or session inactive');
-      _showMessage('Invalid or expired QR code. Please scan a valid QR code from an active session.', isError: true);
-      setState(() {
-        isProcessing = false;
-      });
-      return;
-    }
-    
-    print('Session verified: ${session.subject} - ${session.className} - ${session.section}');
-
     try {
-      // Use the authenticated user ID (from Supabase auth) instead of student.id
-      // This ensures the foreign key constraint is satisfied
+      // 1. Verify Format and Expiry First
+      final qrService = QRService();
+      final parsedData = qrService.parseQRData(qrData);
+
+      if (parsedData == null) {
+        _showMessage('Invalid QR code format.', isError: true);
+        setState(() {
+          _isProcessing = false;
+        });
+        return;
+      }
+
+      final isValid = qrService.isQRValid(qrData);
+
+      if (!isValid) {
+        _showMessage(
+            'QR Code Expired. Please scan the current code on the board.',
+            isError: true);
+        setState(() {
+          _isProcessing = false;
+        });
+        return;
+      }
+
+      // 2. Fetch User Location and Check Geofence
+      _showMessage('Verifying location...', isError: false);
+
+      Position position;
+      try {
+        position = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.high);
+      } catch (e) {
+        _showMessage('Could not get your location. Make sure GPS is on.',
+            isError: true);
+        setState(() {
+          _isProcessing = false;
+        });
+        return;
+      }
+
+      double distanceInMeters = Geolocator.distanceBetween(
+        position.latitude,
+        position.longitude,
+        AppConstants.szabistLatitude,
+        AppConstants.szabistLongitude,
+      );
+
+      print(
+          'Student is $distanceInMeters meters away from SZABIST H-8/4 campus.');
+
+      if (distanceInMeters > AppConstants.allowedGeofenceRadiusMeters) {
+        _showMessage(
+            'You are too far from campus (${distanceInMeters.toStringAsFixed(0)}m). You must be inside Szabist to mark attendance.',
+            isError: true);
+        setState(() {
+          _isProcessing = false;
+        });
+        return;
+      }
+
+      // 3. Proceed with marking attendance
+      AttendanceSession? session;
+
+      if (parsedData.containsKey('session_id')) {
+        final sessionId = parsedData['session_id'] as String;
+        print('Parsed sessionId from valid JSON: $sessionId');
+        session = await attendanceProvider.verifyQRCode(sessionId);
+        print('Session found (from JSON): ${session != null}');
+      }
+
+      if (session == null) {
+        _showMessage(
+            'Invalid session. Please scan a valid QR code from an active session.',
+            isError: true);
+        setState(() {
+          _isProcessing = false;
+        });
+        return;
+      }
+
+      // Proceed to mark attendance using the found session
       final success = await attendanceProvider.markAttendance(
         sessionId: session.id,
-        studentId: studentUserId, // Use auth user ID, not student table ID
-        studentName: student.name,
-        rollNumber: student.rollNumber,
+        studentId: student.id, // Pass numeric student ID
       );
 
       if (success) {
         _showMessage('Attendance marked successfully!', isError: false);
-        await Future.delayed(const Duration(seconds: 2));
         if (mounted) {
-          Navigator.of(context).pop();
+          Navigator.of(context).pop(true);
         }
       } else {
         _showMessage('Failed to mark attendance', isError: true);
         setState(() {
-          isProcessing = false;
+          _isProcessing = false;
         });
       }
     } catch (e) {
       final errorMessage = e.toString().replaceFirst('Exception: ', '');
-      print('Error marking attendance: $errorMessage');
+      print('Error during attendance marking: $e');
       _showMessage('Error: $errorMessage', isError: true);
       setState(() {
-        isProcessing = false;
+        _isProcessing = false;
       });
     }
   }
 
   void _showMessage(String message, {required bool isError}) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(
-                isError ? Icons.error_outline : Icons.check_circle_outline,
-                color: Colors.white,
-              ),
-              const SizedBox(width: 12),
-              Expanded(child: Text(message)),
-            ],
-          ),
-          backgroundColor: isError ? const Color(0xFFE53935) : const Color(0xFF43A047),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          margin: const EdgeInsets.all(16),
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(fontWeight: FontWeight.w600),
         ),
-      );
-    }
+        backgroundColor: isError ? Colors.red.shade700 : Colors.green.shade700,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 4),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        elevation: 0,
         backgroundColor: Colors.transparent,
+        elevation: 0,
         leading: IconButton(
+          icon:
+              const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.3),
-                width: 1,
-              ),
-            ),
-            child: const Icon(
-              Icons.arrow_back_rounded,
-              color: Colors.white,
-              size: 20,
-            ),
-          ),
         ),
         title: const Text(
-          'Scan QR Code',
+          'Mark Attendance',
           style: TextStyle(
             color: Colors.white,
-            fontWeight: FontWeight.w600,
-            fontSize: 20,
+            fontWeight: FontWeight.bold,
           ),
         ),
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 8),
             child: IconButton(
-              onPressed: () => controller.toggleTorch(),
+              onPressed: () => _cameraController.toggleTorch(),
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.5),
+                  color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: Colors.white.withOpacity(0.3),
@@ -219,11 +259,11 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
             child: Stack(
               children: [
                 MobileScanner(
-                  controller: controller,
+                  controller: _cameraController,
                   onDetect: (capture) {
                     final List<Barcode> barcodes = capture.barcodes;
                     for (final barcode in barcodes) {
-                      if (!isProcessing && barcode.rawValue != null) {
+                      if (!_isProcessing && barcode.rawValue != null) {
                         _handleScan(barcode.rawValue!);
                         break;
                       }
@@ -238,7 +278,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                   child: Container(),
                 ),
                 // Processing overlay
-                if (isProcessing)
+                if (_isProcessing)
                   Container(
                     color: Colors.black.withOpacity(0.7),
                     child: Center(

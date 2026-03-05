@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
+import '../config/constants.dart';
 
 class QRService {
   // Singleton pattern
@@ -47,7 +48,7 @@ class QRService {
 
   // Validate QR code (check if not expired)
   bool isQRValid(String qrData,
-      {Duration validityDuration = const Duration(minutes: 5)}) {
+      {Duration validityDuration = AppConstants.qrCodeRefreshInterval}) {
     final data = parseQRData(qrData);
     if (data == null) return false;
 
@@ -57,6 +58,6 @@ class QRService {
     final qrTime = DateTime.fromMillisecondsSinceEpoch(timestamp);
     final now = DateTime.now();
 
-    return now.difference(qrTime) < validityDuration;
+    return now.difference(qrTime) <= validityDuration;
   }
 }
