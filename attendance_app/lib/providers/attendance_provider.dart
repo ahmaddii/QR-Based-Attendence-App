@@ -106,17 +106,18 @@ class AttendanceProvider with ChangeNotifier {
   }
 
   // -------------------- VERIFY QR --------------------
-  Future<AttendanceSession?> verifyQRCode(String qrCode) async {
+  Future<AttendanceSession?> verifyQRCode(String sessionId) async {
     try {
       final sessionData = await _supabase
           .from(AppConstants.sessionsTable)
           .select()
-          .eq('qr_code', qrCode)
+          .eq('id', sessionId)
           .eq('is_active', true)
           .maybeSingle();
 
       if (sessionData == null) {
-        return null;
+        throw Exception(
+            'Session ID ($sessionId) not found or is no longer active.');
       }
 
       return AttendanceSession.fromJson({
@@ -131,7 +132,8 @@ class AttendanceProvider with ChangeNotifier {
         'isActive': sessionData['is_active'] ?? false,
       });
     } catch (e) {
-      return null;
+      if (e is Exception) rethrow;
+      throw Exception('Database query failed: $e');
     }
   }
 

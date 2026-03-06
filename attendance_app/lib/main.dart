@@ -15,7 +15,6 @@ import 'screens/student/student_home_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Check if Supabase is configured
   if (!SupabaseConfig.isConfigured) {
     print(' WARNING: Supabase credentials not configured!');
     print(
@@ -26,7 +25,6 @@ void main() async {
     );
   }
 
-  // Initialize Supabase
   try {
     await Supabase.initialize(
       url: SupabaseConfig.supabaseUrl,

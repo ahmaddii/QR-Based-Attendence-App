@@ -147,21 +147,19 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
       // 3. Proceed with marking attendance
       AttendanceSession? session;
 
-      if (parsedData.containsKey('session_id')) {
-        final sessionId = parsedData['session_id'] as String;
+      if (parsedData.containsKey('sessionId')) {
+        final sessionId = parsedData['sessionId'] as String;
         print('Parsed sessionId from valid JSON: $sessionId');
         session = await attendanceProvider.verifyQRCode(sessionId);
         print('Session found (from JSON): ${session != null}');
+      } else {
+        throw Exception(
+            'The scanned QR code is missing the session ID. Are you scanning an old code?');
       }
 
       if (session == null) {
-        _showMessage(
-            'Invalid session. Please scan a valid QR code from an active session.',
-            isError: true);
-        setState(() {
-          _isProcessing = false;
-        });
-        return;
+        throw Exception(
+            'Invalid session. Please scan a valid QR code from an active session.');
       }
 
       // Proceed to mark attendance using the found session
